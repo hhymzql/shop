@@ -51,13 +51,29 @@
         <el-table-column label="角色描述" prop="roleDesc"></el-table-column>
         <el-table-column label="操作" width="300px">
           <template slot-scope="scope">
-            <el-button size="mini" type="primary" icon="el-icon-edit">编辑</el-button>
+            <el-button size="mini" type="primary" icon="el-icon-edit" @click="showEditDialog(scope.row.id)">编辑</el-button>
             <el-button size="mini" type="danger" icon="el-icon-delete">删除</el-button>
             <el-button size="mini" type="warning" icon="el-icon-setting" @click="showSetRightDialog(scope.row)">分配权限</el-button>
           </template>
         </el-table-column>
       </el-table>
     </el-card>
+
+    <!-- 修改角色的对话框 -->
+    <el-dialog title="修改角色" :visible.sync="editDialogVisible" width="50%" @close="editDialogClosed">
+      <el-form :model="editForm" :rules="editFormRules" ref="editFormRef" label-width="70px">
+        <el-form-item label="角色名称">
+          <el-input v-model="editForm.roleName"></el-input>
+        </el-form-item>
+        <el-form-item label="角色描述">
+          <el-input v-model="editForm.roleDesc"></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="editDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="editUserInfo">确 定</el-button>
+      </span>
+    </el-dialog>
 
     <!-- 分配权限的对话框 -->
     <el-dialog title="分配权限" :visible.sync="setRightDialogVisible" width="50%" @close="setRightDialogClosed">
@@ -77,6 +93,19 @@ export default {
     return {
       // 所有角色列表数据
       rolelist: [],
+      // 控制修改用户对话框的显示与隐藏
+      editDialogVisible: false,
+      // 查询到的用户信息对象
+      editForm: {},
+      // 修改表单的验证规则对象
+      editFormRules: {
+        roleName: [
+          { required: true, message: '请输入角色名称', trigger: 'blur' }
+        ],
+        roleDesc: [
+          { required: true, message: '请输入角色描述', trigger: 'blur' }
+        ]
+      },
       // 控制分配权限对话框的显示与隐藏
       setRightDialogVisible: false,
       // 所有权限的数据
@@ -105,8 +134,6 @@ export default {
       }
 
       this.rolelist = res.data
-
-      console.log(this.rolelist)
     },
     // 根据Id删除对应的权限
     async removeRightById(role, rightId) {
@@ -136,6 +163,46 @@ export default {
       // 不去重新获取角色列表，而是再次赋值
       // this.getRolesList()
       role.children = res.data
+    },
+    // 展示编辑角色的对话框
+    async showEditDialog(id) {
+      const { data: res } = await this.$http.get('roles/' + id)
+
+      if (res.meta.status !== 200) {
+        return this.$message.error('查询角色信息失败！')
+      }
+
+      this.editForm = res.data
+      this.editDialogVisible = true
+    },
+    // 监听修改角色对话框的关闭事件
+    editDialogClosed() {
+      this.$refs.editFormRef.resetFields()
+    },
+    // 修改角色信息并提交
+    editUserInfo() {
+      this.$refs.editFormRef.validate(async valid => {
+        if (!valid) return
+        // 发起修改用户信息的数据请求
+        const { data: res } = await this.$http.put(
+          'roles/' + this.editForm.roleId,
+          {
+            roleName: this.editForm.roleName,
+            roleDesc: this.editForm.roleDesc
+          }
+        )
+
+        if (res.meta.status !== 200) {
+          return this.$message.error('更新角色信息失败！')
+        }
+
+        // 关闭对话框
+        this.editDialogVisible = false
+        // 刷新数据列表
+        this.getRolesList()
+        // 提示修改成功
+        this.$message.success('更新角色信息成功！')
+      })
     },
     // 展示分配权限的对话框
     async showSetRightDialog(role) {

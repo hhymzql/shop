@@ -235,7 +235,6 @@ export default {
     },
     // 监听 pagesize 改变的事件
     handleSizeChange(newSize) {
-      // console.log(newSize)
       this.queryInfo.pagesize = newSize
       this.getUserList()
     },
@@ -281,7 +280,6 @@ export default {
     },
     // 展示编辑用户的对话框
     async showEditDialog(id) {
-      // console.log(id)
       const { data: res } = await this.$http.get('users/' + id)
 
       if (res.meta.status !== 200) {
