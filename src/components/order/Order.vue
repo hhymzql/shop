@@ -148,7 +148,7 @@ export default {
       const { data: res } = await this.$http.get('/kuaidi/804909574412544580')
 
       if (res.meta.status !== 200) {
-        return this.$message.error('获取物流进度失败！')
+        return this.$message.error('获取物流进度失败了！')
       }
 
       this.progressInfo = res.data
